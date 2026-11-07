@@ -1,0 +1,9 @@
+MHS v50.3 · Recuperación ampliada
+
+- Recupera datos de Empresa desde mhs_config y otras claves mhs_* antiguas.
+- Recupera razón social, nombre comercial, NIF/CIF, dirección, CP, provincia, teléfono, email y ROESB si existen.
+- Recupera logotipo si sigue almacenado localmente.
+- Recupera nombre, apellidos y firma del Director Técnico cuando existan en versiones anteriores.
+- No borra datos originales.
+- No sobrescribe campos actuales ya cumplimentados.
+- Mantiene protección contra duplicados de clientes, productos y hojas.

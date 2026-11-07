@@ -1,0 +1,11 @@
+MHS PILOTO v50.2 · RECUPERACIÓN AUTOMÁTICA
+
+- Al abrir por primera vez, detecta automáticamente datos de versiones anteriores en el mismo navegador/dispositivo.
+- Muestra un resumen ANTES de importar: clientes, productos, hojas y fotos/documentos disponibles.
+- La importación requiere confirmación del usuario.
+- No borra, modifica ni mueve los datos originales.
+- Evita duplicar clientes/productos por identificador y hojas por ID/origen.
+- Copia fotos/documentos disponibles desde la base local mhs_files a la base offline actual.
+- Registra un historial interno de la migración realizada.
+- Si se pospone la recuperación, se puede lanzar manualmente desde Inicio o Empresa / copias.
+- Mantiene todo lo incluido en v50.1, incluida la vista previa A4.

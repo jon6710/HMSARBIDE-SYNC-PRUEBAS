@@ -1,0 +1,11 @@
+MHS · Piloto v48 · Revisión integral
+
+- Recuperación/migración de clientes, productos, hojas, fotos y documentos antiguos.
+- Clientes en barra lateral con ficha completa: razón social, CIF/NIF, dirección, CP, provincia, teléfono, email, contacto, forma de pago e IBAN.
+- IBAN completo solo en ficha interna; documentos muestran únicamente los 4 últimos dígitos.
+- Empresa: razón social, nombre comercial, CIF/NIF, dirección, CP, provincia, teléfono, email, ROESB y logotipo.
+- Hoja PDF / Albarán unificado para todos los servicios; firma obligatoria si se genera como albarán.
+- Botón Eliminar en hojas y catálogos con confirmación.
+- Botón Salir visible en la app instalada.
+- Facturación: botón Añadir factura, edición, eliminación, vínculo con cliente/hoja y PDF.
+- Mantiene Autoclave (4 decimales sin redondear), Madera in situ, DDD, Mobiliario, Termitas y modo offline.

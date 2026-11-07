@@ -1,0 +1,19 @@
+MIS HOJAS DE SERVICIO · PILOTO INSTALABLE v44
+
+Objetivo
+- Mantener intactas las estructuras y reglas funcionales de v43.
+- Añadir instalación como PWA en iPhone/iPad, Mac, Android y navegadores compatibles.
+- Mantener almacenamiento local provisional y exportación/importación JSON.
+- Dejar la aplicación preparada para conectar una base de datos central más adelante.
+
+Importante
+- Esta versión NO añade todavía sincronización multiusuario ni base de datos remota.
+- Para pruebas con datos reales, exportar una copia JSON al terminar cada sesión.
+- No fusionar con main hasta probar la rama piloto.
+
+Rama sugerida
+piloto-instalable-v44
+
+MODO OFFLINE
+------------
+Esta edición incorpora guardado offline, cola persistente de cambios, indicador de estado y almacenamiento local de fotos/documentos. Consulta MODO_OFFLINE_v44.txt.

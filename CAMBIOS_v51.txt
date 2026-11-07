@@ -1,0 +1,11 @@
+MHS PILOTO v51
+
+Cambios de esta revisión:
+- Empresa: mantiene logotipo y añade sello escaneado.
+- Director Técnico: nombre, apellidos y firma escaneada mediante archivo de imagen.
+- Hoja PDF / Albarán: muestra logotipo, sello y firma/datos del Director Técnico.
+- Presupuesto: muestra logotipo, sello y firma/datos del Director Técnico.
+- Certificado final: muestra logotipo, sello y firma/datos del Director Técnico.
+- Factura: mantiene datos de empresa y logotipo, pero NO muestra sello ni firma del Director Técnico.
+- La recuperación de clientes, productos, hojas, fotos y documentos de v50.3 se mantiene sin cambios.
+- Modo offline y almacenamiento local se mantienen.

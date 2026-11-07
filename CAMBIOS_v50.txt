@@ -1,0 +1,10 @@
+MHS PILOTO v50 · DIRECTOR TÉCNICO Y DOCUMENTOS
+
+Cambios sobre v49:
+- Empresa: nombre y apellidos del Director Técnico.
+- Firma manuscrita del Director Técnico, guardada en la configuración de Empresa.
+- Firma/nombre del Director Técnico en certificados y documentación técnica.
+- Hoja PDF / Albarán: botón Eliminar documento con confirmación; no borra la hoja de servicio.
+- Facturas: IVA seleccionable exclusivamente al 21 % o al 10 %.
+- Presupuestos: se mantienen y consolidan Imprimir/PDF y Compartir.
+- Se conserva numeración, recuperación de datos, clientes, productos, offline y el resto de reglas v49.

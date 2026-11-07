@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0f7a49">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="HMSARBIDE">
+  <meta name="description" content="HMSARBIDE · sincronización piloto">
+  <title>HMSARBIDE · SINCRONIZACIÓN PILOTO</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar no-print">
+      <div class="side-brand"><span class="brandmark">HA</span><div><strong>HMSARBIDE</strong><small>Gestión de servicios</small></div></div>
+      <nav class="side-nav" aria-label="Navegación principal">
+        <button class="side-link active" id="btnDashboard">⌂ <span>Inicio</span></button>
+        <button class="side-link" data-module="madera">🪵 <span>Madera in situ</span></button>
+        <button class="side-link" data-module="ddd">🛡️ <span>DDD</span></button>
+        <button class="side-link" data-module="autoclave">♨️ <span>Autoclave</span></button>
+        <button class="side-link" data-module="mobiliario">🪑 <span>Mobiliario</span></button>
+        <button class="side-link" data-module="termitas">🐜 <span>Termitas</span></button>
+        <div class="side-sep"></div>
+        <button class="side-link" data-area="albaranes">▤ <span>Hoja PDF / Albarán</span></button>
+        <button class="side-link" data-area="facturacion">€ <span>Facturación</span></button>
+        <button class="side-link" data-area="presupuestos">🧾 <span>Presupuestos</span></button>
+        <button class="side-link" data-area="documentos">▱ <span>Documentos</span></button>
+        <button class="side-link" id="btnDocsPilot" type="button">📄 <span>Plantillas A4 de prueba</span></button>
+        <button class="side-link" id="btnClients">👥 <span>Clientes</span></button>
+        <button class="side-link" id="btnProducts">🧴 <span>Productos</span></button>
+        <button class="side-link" id="btnSettings">⚙ <span>Empresa / copias</span></button>
+        <button class="side-link" id="btnExit">↪ <span>Salir</span></button>
+      </nav>
+      <div class="side-foot"><strong>HMSARBIDE · SYNC PILOTO</strong><small>Empresa · Sello · Firma · Offline</small></div>
+    </aside>
+    <section class="workspace">
+      <header class="topbar no-print">
+        <div><strong>Piloto operativo integrado</strong><small>Servicios, documentación, facturación y certificados</small></div>
+        <div class="topactions"><button class="sync-status" id="syncStatusBtn" type="button" aria-label="Estado de sincronización"><span id="syncDot">●</span><span id="syncText">Preparando offline…</span></button><button class="btn ghost install-app-btn" id="installAppBtn" type="button" hidden>Instalar app</button><span class="pilot-chip">SYNC · PILOTO</span></div>
+      </header>
+      <div class="pilot-warning no-print">PILOTO DE SINCRONIZACIÓN SUPABASE: repositorio independiente, sin copiar los datos de las versiones anteriores. Trabajos y fotografías se guardan localmente. La conexión requiere iniciar sesión y activación expresa. Se detiene si detecta versiones incompatibles. NO usar con datos reales hasta probar en ordenador, tablet y móvil.</div>
+      <main id="app"></main>
+    </section>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="installHelp" class="install-help no-print" hidden>
+    <div class="install-help-card">
+      <strong>Instalar HMSARBIDE</strong>
+      <p id="installHelpText">Puedes instalar esta aplicación desde el menú del navegador.</p>
+      <button class="btn" id="closeInstallHelp" type="button">Entendido</button>
+    </div>
+  </div>
+
+  <script src="offline-sync.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-sync.js"></script>
+  <script src="app.js"></script>
+  <script src="piloto-documentos.js"></script>
+  <script>
+  (function(){
+    const btn=document.getElementById('syncStatusBtn');
+    if(btn){btn.textContent='Supabase · piloto sin verificar';btn.disabled=true;btn.title='La sincronización se controla desde Supabase · pruebas';}
+  })();
+  </script>
+
+  <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}))}</script>
+
+  <script>
+  (function(){
+    let deferredPrompt=null;
+    const btn=document.getElementById('installAppBtn');
+    const help=document.getElementById('installHelp');
+    const helpText=document.getElementById('installHelpText');
+    const close=document.getElementById('closeInstallHelp');
+    const standalone=window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
+    const isiOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    if(!standalone){
+      if(isiOS){
+        btn.hidden=false;
+        btn.addEventListener('click',()=>{helpText.textContent='En Safari: pulsa Compartir y después “Añadir a pantalla de inicio”.';help.hidden=false;});
+      }
+      window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;btn.hidden=false;});
+      btn.addEventListener('click',async()=>{
+        if(!deferredPrompt) return;
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt=null;btn.hidden=true;
+      });
+    }
+    close.addEventListener('click',()=>help.hidden=true);
+    help.addEventListener('click',e=>{if(e.target===help) help.hidden=true;});
+  })();
+  </script>
+
+  <script>
+  // Sincronización Cloudflare deshabilitada expresamente en este piloto.
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,7 @@
+PILOTO REAL v43
+- Nuevo shell integrado con navegación lateral y acceso rápido por servicio.
+- Panel operativo inspirado en la visual aprobada.
+- Vistas de módulo separadas para Madera, DDD, Autoclave, Mobiliario y Termitas.
+- Áreas comunes: Albaranes, Facturación y Documentos.
+- Mantiene la lógica funcional de v42.
+- Mantiene todas las reglas de Autoclave y Termitas definidas en conversación.

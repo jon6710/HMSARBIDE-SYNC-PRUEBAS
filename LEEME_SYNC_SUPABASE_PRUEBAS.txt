@@ -1,0 +1,34 @@
+HMSARBIDE — SINCRONIZACIÓN SUPABASE, PILOTO DE PRUEBAS
+
+NO SUBIR SOBRE HMSARBIDE EXISTENTE. Crear repositorio totalmente NUEVO.
+NO IMPORTAR COPIAS REALES EN ESTE PILOTO. NO BORRAR DATOS ANTIGUOS DE SUPABASE.
+
+ESTADO:
+- El código permite iniciar sesión con tu usuario Supabase y comprobar el nuevo espacio de pruebas.
+- Los datos se guardan localmente en localStorage + IndexedDB.
+- Las versiones de nube se guardan como registros inmutables en public.app_data con data_type='hmsarbide_sync_piloto_v1'.
+- No modifica las tablas service_sheets ni las filas antiguas products/clients/config.
+- Nunca publica a nube automáticamente sin activación explícita.
+- En caso de conflictos entre dispositivos, bloquea el envío; no resuelve conflictos automáticamente.
+- La primera recepción requiere acción explícita. Después de vincular el dispositivo, la recepción puede ser automática SOLO si está en Inicio y no hay cambios locales pendientes; si hay un formulario abierto, se pospone.
+- Las fotografías incrustadas en el estado viajan con el estado si no supera 3,5MB. Los archivos adjuntos almacenados como blobs separados NO están sincronizados: permanecen locales.
+- Pendiente de probar la sincronización real y la PWA offline en Mac, Android tablet y móvil con datos ficticios.
+
+PASOS DE PRUEBA (NO EN PRODUCCION):
+1. Crear un repositorio GitHub distinto HMSARBIDE-SYNC-PRUEBAS y habilitar Pages.
+2. Entrar desde ventana de incógnito SIN importar los 11 clientes reales.
+3. Crear un cliente de ejemplo con datos falsos y exportar una copia JSON de respaldo.
+4. Pulsar 'Supabase · pruebas', entrar con tu usuario Supabase (contraseña solo se introduce en tu navegador; no por chat).
+5. Pulsar 'Comprobar nube (sin cambios)' y asegurarse de que el espacio de pruebas está vacío.
+6. Pulsar 'Publicar copia de PRUEBA' con confirmación explícita.
+7. En otro dispositivo de pruebas limpio, iniciar sesión, Comprobar nube, y pulsar 'Descargar versión segura'.
+8. Comprobar que aparece el cliente ficticio. Editar en segundo dispositivo, comprobar nube y publicar con confirmación.
+9. En primero, Comprobar nube y Descargar versión segura. Probar offline con conexiones desactivadas y recuperación.
+10. Si aparecen divergencias o se detecta una colisión, DETENER las pruebas; no borrar filas remotas.
+
+LÍMITES
+- El sistema es un prototipo verificable, no una garantía de sincronización en producción.
+- No se ha probado contra la base de datos real ni con dispositivos remotos desde aquí.
+- No incluye sincronización de adjuntos externos; sí de datos JSON bajo límite de tamaño.
+- Antes de usarlo con clientes reales falta: pruebas de RLS con cuenta autenticada, conexiones, recuperación offline y conflictos, carga de fotografías/adjuntos y datos masivos.
+- Conservar copias ZIP y JSON originales por separado.

@@ -1,0 +1,25 @@
+MHS PILOTO REAL v43
+
+Objetivo
+- Convertir el concepto visual aprobado en un piloto navegable y funcional.
+- Mantener main sin cambios hasta validar la experiencia.
+
+Qué incluye
+- Panel integrado con navegación lateral.
+- Madera in situ: hoja, fotos antes/después, modalidades de facturación y certificado.
+- DDD: hoja independiente y facturación provisional/manual hasta cerrar sus reglas definitivas.
+- Autoclave: comparación cliente, medición propia, 4 decimales sin redondear y m3 a facturar = nuestra medición.
+- Mobiliario: hoja, fotos, piezas/unidades y albarán de transportista.
+- Termitas: expediente de 3 años, hojas de seguimiento, contacto con colonia por evidencia, validación manual para instalaciones <=3 estaciones, plan económico y certificado.
+- Áreas comunes de Albaranes, Facturación y Documentos.
+- Exportar/importar copia JSON desde Empresa / copias.
+
+Prueba recomendada
+1. Crear rama: piloto-real-v43
+2. Subir todos los archivos del ZIP a esa rama.
+3. Apuntar GitHub Pages temporalmente a piloto-real-v43.
+4. Probar un expediente de cada servicio.
+5. No fusionar con main hasta revisar el resultado.
+
+IMPORTANTE
+Los datos se guardan en localStorage del navegador. Para pruebas con clientes reales, exporta una copia JSON al finalizar cada sesión. Todavía no es un sistema multiusuario ni una base de datos centralizada.

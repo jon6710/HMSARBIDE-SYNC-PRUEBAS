@@ -1,0 +1,13 @@
+MHS PILOTO v49 · NUMERACIÓN Y COMPARTIR
+
+- Serie común por servicio: HS / ALB / FRA / CER comparten el mismo número base.
+- Próximo número base configurable desde Empresa / copias.
+- Presupuestos independientes: PREAAAAMMDD y sufijos -01, -02... si hay varios el mismo día.
+- Nuevo apartado Presupuestos con crear, editar, PDF, compartir y eliminar.
+- Botón Compartir en Hoja PDF / Albarán, Facturas y Presupuestos.
+- Hoja PDF / Albarán calcula automáticamente HS o ALB según el tipo elegido.
+- Factura vinculada a una hoja usa automáticamente FRA + número base del servicio.
+- Certificado usa CER + número base del servicio.
+- Se mantiene recuperación de datos, clientes, empresa, productos, eliminación, firma obligatoria de albaranes y modo offline.
+
+NOTA: Compartir utiliza la hoja nativa del dispositivo cuando está disponible. La generación del PDF sigue realizándose mediante Imprimir / PDF del sistema.

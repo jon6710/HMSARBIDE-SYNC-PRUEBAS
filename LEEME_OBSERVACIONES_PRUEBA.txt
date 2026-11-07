@@ -1,0 +1,17 @@
+MHS — OBSERVACIONES, PILOTO AISLADO. 06-11-2026.
+
+NO subir a la rama estable ni sobreescribir la app que ya funciona.
+Publicar en una carpeta/repositorio de pruebas independiente y conservar la versión anterior.
+
+Cambios SOLO en app.js y la clave de caché de sw.js:
+* Las NUEVAS hojas de Mobiliario y Autoclave se crean con Observaciones precargadas.
+* En ambas hojas hay campos editables: registro, materias activas, descripción, propiedad, nanomateriales e instrucciones.
+* En hojas nuevas, hoja de servicio y albarán imprimen 'ver anexo adjunto' en el hueco de Observaciones del fondo aprobado, y agregan un anexo A4 legible con el contenido.
+* Las hojas existentes mantienen su comportamiento anterior de observaciones y PDF.
+* Fondos de documentos, cálculos, fotos y resto de módulos no se modifican.
+
+PRECAUCIONES:
+* Los textos fueron transcritos de una fotografía; revisar y validar literalmente antes de usarlos profesionalmente.
+* El bloque de texto es editable en cada hoja. Los cambios realizados EN UNA HOJA NO se aplican a las siguientes.
+* No se ha verificado visualmente en la tablet ni impreso los PDF reales.
+* No se modifica la aplicación instalada hasta que el usuario confirme pruebas.

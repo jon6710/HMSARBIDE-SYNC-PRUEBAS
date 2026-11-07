@@ -1,0 +1,19 @@
+MHS PILOTO INSTALABLE v44 · MODO OFFLINE
+
+FUNCIONES AÑADIDAS
+- La aplicación abre y funciona sin cobertura una vez instalada/cargada al menos una vez.
+- Las hojas y cambios se guardan en el dispositivo.
+- Existe una copia redundante del estado en IndexedDB.
+- Cada cambio genera una cola persistente de sincronización.
+- Las fotos se guardan localmente y quedan en cola para subida posterior.
+- Se pueden adjuntar PDF, imágenes y documentos; quedan guardados localmente y en cola.
+- Indicador visible: Online / Sin conexión / pendientes / sincronizando.
+- Al recuperar cobertura la app intenta sincronizar automáticamente.
+
+FASE ACTUAL
+Todavía no existe una base de datos/servidor central conectado. Por seguridad, mientras no configuremos ese servidor, los cambios de la cola NO se eliminan al recuperar Internet: permanecen guardados y marcados como pendientes en el dispositivo.
+
+Cuando conectemos la base de datos central, solo habrá que configurar el endpoint de sincronización (MHS_SYNC_ENDPOINT). La cola existente enviará cambios, fotos y documentos automáticamente y los eliminará del dispositivo únicamente después de recibir confirmación correcta del servidor.
+
+RECOMENDACIÓN PARA EL PILOTO
+Seguir exportando copias JSON periódicas, especialmente después de pruebas con datos reales.

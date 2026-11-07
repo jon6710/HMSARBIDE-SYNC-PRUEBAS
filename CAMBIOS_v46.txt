@@ -1,0 +1,8 @@
+v46 · Cloudflare
+- Sincronización automática preparada con Cloudflare Workers.
+- D1 para datos de la app.
+- R2 para fotos y documentos.
+- Cola offline existente reutilizada.
+- Sincronización bidireccional entre dispositivos.
+- Token de sincronización configurado por dispositivo, no incluido en GitHub.
+- Toda la estructura funcional anterior se mantiene.

@@ -1,0 +1,12 @@
+HMSARBIDE · PREPUBLICACIÓN V1 · 06-11-2026
+
+Esta es una TERCERA copia independiente basada en MHS-OBSERVACIONES-PRUEBAS.
+NO sustituir ni publicar encima de MHS-INTEGRACION-PRUEBAS, MHS-OBSERVACIONES-PRUEBAS ni la app estable.
+
+Se han conservado los cálculos, módulos, plantillas y lógica de Observaciones de la copia probada.
+Cambios exclusivos para HMSARBIDE: nombre visible/título/manifest y claves independientes de localStorage, IndexedDB, configuración de sincronización y caché.
+Esto evita compartir datos locales con otras aplicaciones publicadas en el mismo dominio de GitHub Pages.
+
+IMPORTANTE: La copia de seguridad JSON de datos reales NO está incluida en este ZIP.
+Esta versión no está validada aún en navegador ni en impresora: probar primero en un repositorio nuevo, con datos ficticios, y después importar copia JSON para comprobar fichas antiguas.
+Los datos del biocida proceden de una transcripción y deben ser comprobados contra la etiqueta y registro vigentes antes de uso profesional.

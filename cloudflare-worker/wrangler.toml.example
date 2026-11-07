@@ -1,0 +1,21 @@
+name = "mhs-sync-v46"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+# Sustituye los IDs/nombres tras crear D1 y R2.
+[[d1_databases]]
+binding = "DB"
+database_name = "mhs-v46"
+database_id = "PEGA_AQUI_DATABASE_ID"
+
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "mhs-v46-files"
+
+[vars]
+# Puedes poner aquí la URL exacta de GitHub Pages para limitar CORS.
+# Ejemplo: https://usuario.github.io
+ALLOWED_ORIGIN = "*"
+
+# NO pongas SYNC_TOKEN aquí si vas a subir este archivo a GitHub.
+# Créalo como secreto: npx wrangler secret put SYNC_TOKEN

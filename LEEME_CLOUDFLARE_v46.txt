@@ -1,0 +1,30 @@
+MHS PILOTO CLOUDFLARE v46
+==========================
+
+OBJETIVO
+- Mantiene toda la app y el modo offline ya probado.
+- D1 guarda el estado/hojas y metadatos.
+- R2 guarda fotos y documentos.
+- Un Worker recibe la cola pendiente y permite descargar el estado en otros dispositivos.
+- Si no hay Internet, todo sigue guardándose localmente.
+
+SEGURIDAD DEL PILOTO
+- El token NO está dentro del código ni del ZIP configurado.
+- Cuando conectemos Cloudflare, el Worker tendrá un secreto SYNC_TOKEN.
+- En cada dispositivo se introduce la URL del Worker y el token al pulsar el indicador de sincronización.
+- El token se guarda solo en ese dispositivo (localStorage).
+- Para una futura versión multiusuario conviene sustituir este token por autenticación de usuarios.
+
+ARCHIVOS CLOUDFLARE
+cloudflare-worker/worker.js
+cloudflare-worker/schema.sql
+cloudflare-worker/wrangler.toml.example
+
+FLUJO
+1. Sin cobertura: hoja/foto/documento -> IndexedDB -> cola pendiente.
+2. Vuelve Internet -> Worker -> D1/R2 -> se eliminan de la cola solo tras confirmación.
+3. Otro dispositivo -> descarga el estado más reciente y las fotos desde Cloudflare.
+
+IMPORTANTE
+No fusiones esta versión en main hasta probarla en una rama independiente.
+La app conserva la exportación JSON como copia adicional.

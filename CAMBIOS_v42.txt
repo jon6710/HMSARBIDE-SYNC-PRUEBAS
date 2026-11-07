@@ -1,0 +1,14 @@
+CAMBIOS PRINCIPALES v42
+=======================
+- Integración de los 5 servicios en un único piloto responsive.
+- Termitas deja de ser un módulo reservado y pasa a expediente funcional de 3 años.
+- Termitas: plan particular 60/25/15 y plan personalizado.
+- Termitas: contacto automático en instalaciones >3 estaciones cuando una visita registra 3+ estaciones activas.
+- Termitas: instalaciones <=3 estaciones requieren validación manual con evidencia, motivo, fecha, técnico y firma.
+- Termitas: hojas de seguimiento imprimibles, plan de facturación y certificado.
+- Autoclave conserva medición propia como m³ facturables y 4 decimales truncados sin redondear.
+- Madera in situ conserva fotos antes/después, m², presupuesto, Pack Presupuesto y combinada.
+- Pack Presupuesto conserva el aviso de descuento si se acepta un presupuesto >500 € sin IVA.
+- Mobiliario conserva tratamiento, entrega/transportista y facturación configurable.
+- DDD permanece independiente con facturación manual provisional hasta definir su lógica específica.
+- Copias JSON: exportar e importar.

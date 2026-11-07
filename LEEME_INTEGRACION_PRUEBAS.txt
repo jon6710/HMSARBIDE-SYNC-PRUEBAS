@@ -1,0 +1,21 @@
+MHS — INTEGRACIÓN AUTÓCLAVE + MOBILIARIO — SOLO PARA PRUEBAS
+
+BASE: ZIP original «Mis---hojas---de--servicio-main(3).zip» de la aplicación estable.
+MEJORAS: Autoclave y Mobiliario y sus documentos PDF, desde la v54.15 de pruebas.
+
+NO SUBIR AL REPOSITORIO ESTABLE NI SUSTITUIR LA APP EN PRODUCCIÓN.
+Publicar solamente en un nuevo repositorio / entorno aislado de integración, después de una copia de seguridad completa.
+Esta copia mantiene los módulos existentes de Madera in situ, DDD, Termitas, Clientes,
+Productos, Empresa, Presupuestos y Facturación general y añade las mejoras de los dos servicios.
+
+IMPORTANTE SOBRE LOS DATOS REALES:
+- El almacenamiento local y la base offline de esta compilación usan nombres independientes.
+- No recupera automáticamente información de versiones anteriores.
+- Antes de importar datos reales se debe conservar su JSON original y verificar adjuntos.
+- Las fotos guardadas fuera del JSON, como ficheros en IndexedDB, podrían necesitar migración específica.
+- Importar copia en este entorno REEMPLAZA los datos aquí existentes, nunca los de la aplicación estable.
+- La configuración Cloudflare de la copia de pruebas se inicia sin servidor conectado.
+
+SITUACIÓN DE PRUEBAS:
+Comprobaciones estáticas realizadas. Verificar navegando antes de publicar nada sobre la aplicación estable.
+Los originales PDF aprobados están incluidos sin modificación.

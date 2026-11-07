@@ -1,0 +1,22 @@
+MHS v47 · RECUPERACIÓN DE DATOS
+
+Esta versión mantiene el almacenamiento de la v44/v46 y añade un migrador de la aplicación anterior.
+
+En Empresa / copias pulsa: “Recuperar datos de la app anterior”.
+
+El migrador busca en el mismo navegador:
+- mhs_clients
+- mhs_products
+- mhs_sheets
+- mhs_config
+- IndexedDB mhs_files (fotos y documentos)
+
+La migración AÑADE datos y evita duplicar hojas por ID. No borra el piloto actual.
+
+También incorpora:
+- Clientes y Productos en menú lateral con botón Eliminar y confirmación.
+- Botón Salir visible.
+- Eliminación de hojas con confirmación.
+- Adjuntos recuperados visibles desde cada hoja.
+
+IMPORTANTE: si un adjunto antiguo no está localmente en ese dispositivo, se conservará su referencia pero no sus bytes. En ese caso se recuperará después desde la fuente remota o desde el dispositivo que todavía lo tenga.

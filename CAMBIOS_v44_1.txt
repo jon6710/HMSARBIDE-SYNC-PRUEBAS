@@ -1,0 +1,9 @@
+MHS v44.1 Offline
+
+Cambio en Mobiliario:
+- Añadido aviso fijo sobre piezas barnizadas, lacadas o con acabados superficiales.
+- Se aclara que el producto penetra principalmente por orificios de plaga y zonas sin barnizar/recubrir.
+- Se informa de que no se garantiza el estado original de barnices, lacas, pinturas u otros acabados tras el autoclave.
+- El mismo literal se incluye en el certificado/PDF final de Mobiliario.
+
+Se mantiene sin cambios el modo offline, la cola de sincronización y el resto de módulos.

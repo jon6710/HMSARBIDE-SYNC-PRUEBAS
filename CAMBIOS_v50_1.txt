@@ -1,0 +1,8 @@
+MHS PILOTO v50.1 — VISTA PREVIA A4
+
+Cambios:
+- Vista previa de documentos con proporción A4 real, centrada y con márgenes visibles.
+- Escalado responsive en móvil y tablet sin desbordamiento horizontal.
+- Botones en la vista previa: Imprimir / Guardar PDF y Cerrar.
+- La impresión/PDF conserva tamaño A4 real.
+- No se modifica ninguna lógica ni dato de la v50.

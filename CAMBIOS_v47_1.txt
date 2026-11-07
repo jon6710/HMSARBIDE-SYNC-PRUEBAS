@@ -1,0 +1,7 @@
+MHS PILOTO v47.1
+
+- Botón visible "Guardar hoja" en todas las hojas de servicio.
+- Guardado manual disponible en cualquier momento sin finalizar la hoja.
+- Atajo Cmd+S / Ctrl+S para guardar la hoja abierta.
+- Se mantiene la migración de clientes, productos, hojas, fotos y documentos.
+- Se mantiene firma obligatoria en albaranes y botones Eliminar/Salir.
