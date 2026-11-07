@@ -1,0 +1,19 @@
+HMSARBIDE - SINCRONIZACION DE PRUEBAS - RECUPERACION DE CONTRASENA V2
+
+NO SUBIR A HMSARBIDE PRINCIPAL NI A LA APP ORIGINAL.
+Esta versión actualiza ÚNICAMENTE el piloto HMSARBIDE-SYNC-PRUEBAS.
+
+1. En GitHub, repositorio HMSARBIDE-SYNC-PRUEBAS, subir los archivos de esta carpeta y confirmar la sustitución.
+2. Abrir https://jon6710.github.io/HMSARBIDE-SYNC-PRUEBAS/ y recargar una vez.
+3. Pulsar Supabase · pruebas, escribir correo, pulsar Recuperar contraseña.
+4. Abrir el NUEVO correo de recuperación (no uno anterior), que debe volver a HMSARBIDE-SYNC-PRUEBAS.
+5. En la pantalla Recuperar acceso, escribir dos veces una contraseña nueva de al menos 12 caracteres, y pulsar Guardar contraseña nueva.
+6. Regresar al panel Supabase · pruebas y Entrar usando la contraseña nueva.
+7. No pulsar Publicar copia de PRUEBA ni activar envío automático hasta comprobar login y nube.
+
+NOTA: la dirección https://jon6710.github.io/HMSARBIDE-SYNC-PRUEBAS/ debe mantenerse en Authentication > URL Configuration > Redirect URLs.
+No se cambia la dirección Site URL de la app antigua.
+El código utiliza resetPasswordForEmail({redirectTo: ruta actual}), captura PASSWORD_RECOVERY y llama updateUser({password}).
+NO incluye credenciales privadas.
+No se ha hecho una recuperación real contra Supabase desde el entorno de desarrollo: requiere prueba en navegador.
+Las copias del JSON de clientes/empresa y las plantillas aprobadas no cambian.

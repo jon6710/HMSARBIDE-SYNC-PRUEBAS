@@ -10,6 +10,36 @@ const DB='hmsarbide_supabase_piloto_v1';
 const STATE_STORE='journal';
 const event=(name,detail={})=>window.dispatchEvent(new CustomEvent('hms-sync-status',{detail:{name,...detail}}));
 let client=null,sessionUser=null,working=false,suppressed=false,auto=false,timer=null;
+// La recuperación no toca datos ni inicia la sincronización.
+let recoveryGranted=false;
+let recoveryNotice='';
+let recoveryUI=null;
+function displayRecovery(){
+ if(!recoveryUI)return;
+ recoveryUI.panel.hidden=false;
+ recoveryUI.area.hidden=!recoveryGranted;
+ recoveryUI.status.textContent=recoveryNotice||(recoveryGranted?'Enlace de recuperación validado. Escribe la contraseña nueva.':'Solicita un enlace nuevo desde esta aplicación.');
+}
+async function sendRecovery(email){
+ if(!navigator.onLine)throw Error('Conecta Internet para solicitar el correo.');
+ if(!email||!/^\S+@\S+\.\S+$/.test(email))throw Error('Introduce un correo electrónico válido.');
+ const redirectTo=location.origin+location.pathname;
+ const {error}=await sdk().auth.resetPasswordForEmail(email,{redirectTo});
+ if(error)throw error;
+ return 'Si el usuario existe, Supabase enviará un enlace. Ábrelo una sola vez; volverá a HMSARBIDE-SYNC-PRUEBAS.';
+}
+async function finishRecovery(password,confirmPassword){
+ if(!recoveryGranted)throw Error('No hay un enlace de recuperación válido.');
+ if(password.length<12)throw Error('La contraseña nueva debe tener al menos 12 caracteres.');
+ if(password!==confirmPassword)throw Error('Las dos contraseñas no coinciden.');
+ const {error}=await sdk().auth.updateUser({password});
+ if(error)throw error;
+ recoveryGranted=false;auto=false;
+ await sdk().auth.signOut({scope:'local'});
+ recoveryNotice='Contraseña actualizada. Ya puedes entrar con tu correo y la nueva contraseña.';
+ displayRecovery();
+ return recoveryNotice;
+}
 let dbPromise=null;
 function openDB(){
  if(dbPromise)return dbPromise;
@@ -38,7 +68,16 @@ function onLocalSave(s){
 }
 function sdk(){
  if(!window.supabase?.createClient)throw Error('Supabase no está disponible. La aplicación local sigue funcionando.');
- if(!client)client=window.supabase.createClient(URL,KEY,{auth:{storageKey:'hmsarbide-supabase-piloto-auth-v1',persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
+ if(!client){
+  client=window.supabase.createClient(URL,KEY,{auth:{storageKey:'hmsarbide-supabase-piloto-auth-v1',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'implicit'}});
+  client.auth.onAuthStateChange((type)=>{
+   if(type==='PASSWORD_RECOVERY'){
+    recoveryGranted=true;auto=false;
+    recoveryNotice='Enlace válido. Introduce la contraseña nueva y confirma el cambio.';
+    setTimeout(displayRecovery,0);
+   }
+  });
+ }
  return client;
 }
 async function login(email,password){
@@ -161,11 +200,49 @@ function initUI(){
  const top=document.querySelector('.topactions');if(!top)return;
  const b=document.createElement('button');b.className='btn secondary';b.type='button';b.textContent='Supabase · pruebas';top.prepend(b);
  const panel=document.createElement('div');panel.hidden=true;panel.className='panel no-print';panel.style.cssText='position:fixed;z-index:9999;top:70px;right:12px;max-width:460px;width:calc(100vw - 24px);max-height:85vh;overflow:auto;box-shadow:0 12px 40px #0003;padding:18px;background:#fff';
- panel.innerHTML=`<h3>Sincronización Supabase · PILOTO</h3><p>Separada de los datos antiguos de Supabase. No conecta con Cloudflare ni cambia las tablas existentes.</p><label>Correo del usuario Supabase<input id="hss-email" type="email" autocomplete="username" style="width:100%"></label><label>Contraseña<input id="hss-password" type="password" autocomplete="current-password" style="width:100%"></label><div class="cert-actions"><button class="btn" id="hss-login">Entrar</button><button class="btn secondary" id="hss-logout">Salir de Supabase</button><button class="btn secondary" id="hss-close">Cerrar</button></div><p id="hss-status" style="white-space:pre-wrap;line-height:1.5">Sin comprobar.</p><div class="cert-actions"><button class="btn secondary" id="hss-inspect">Comprobar nube (sin cambios)</button><button class="btn" id="hss-publish">Publicar copia de PRUEBA</button><button class="btn secondary" id="hss-adopt">Descargar versión segura</button></div><p><label><input type="checkbox" id="hss-auto"> Envío automático de cambios tras activar la prueba</label></p><small>Ante cambios simultáneos se detiene. Antes de publicar, usa datos ficticios y conserva un JSON externo. No emplear con trabajos reales hasta completar las pruebas de los tres dispositivos.</small>`;
+ panel.innerHTML=`<h3>Sincronización Supabase · PILOTO</h3><p>Separada de los datos antiguos de Supabase. No conecta con Cloudflare ni cambia las tablas existentes.</p><label>Correo del usuario Supabase<input id="hss-email" type="email" autocomplete="username" style="width:100%"></label><label>Contraseña<input id="hss-password" type="password" autocomplete="current-password" style="width:100%"></label><div class="cert-actions"><button class="btn" id="hss-login">Entrar</button><button class="btn secondary" id="hss-logout">Salir de Supabase</button><button class="btn secondary" id="hss-close">Cerrar</button></div><p id="hss-status" style="white-space:pre-wrap;line-height:1.5">Sin comprobar.</p><button class="btn secondary" type="button" id="hss-forgot">Recuperar contraseña</button><div class="cert-actions"><button class="btn secondary" id="hss-inspect">Comprobar nube (sin cambios)</button><button class="btn" id="hss-publish">Publicar copia de PRUEBA</button><button class="btn secondary" id="hss-adopt">Descargar versión segura</button></div><p><label><input type="checkbox" id="hss-auto"> Envío automático de cambios tras activar la prueba</label></p><small>Ante cambios simultáneos se detiene. Antes de publicar, usa datos ficticios y conserva un JSON externo. No emplear con trabajos reales hasta completar las pruebas de los tres dispositivos.</small>`;
  document.body.append(panel);
+ // Pantalla de recuperación visible únicamente tras un enlace válido de Supabase.
+ // Nunca guarda ni muestra la contraseña fuera de los inputs.
+ const rec=document.createElement('section');
+ rec.className='panel no-print';rec.hidden=true;
+ rec.setAttribute('role','dialog');rec.setAttribute('aria-label','Restablecer contraseña de Supabase');
+ rec.style.cssText='position:fixed;z-index:10010;top:8vh;left:50%;transform:translateX(-50%);max-width:520px;width:calc(100vw - 28px);max-height:85vh;overflow:auto;box-shadow:0 10px 60px #0006;padding:22px;background:#fff;border:2px solid #16835b;border-radius:12px';
+ rec.innerHTML=`<h3>HMSARBIDE · Recuperar acceso</h3><p>Solo cambia la contraseña de Supabase. No afecta a clientes, hojas ni documentos.</p><p id="hss-rec-message" role="status" style="white-space:pre-wrap"></p><div id="hss-rec-fields" hidden><label>Contraseña nueva (mínimo 12 caracteres)<input id="hss-rec-new" type="password" autocomplete="new-password" minlength="12" style="width:100%"></label><label>Repetir contraseña nueva<input id="hss-rec-confirm" type="password" autocomplete="new-password" minlength="12" style="width:100%"></label><button id="hss-rec-submit" class="btn" type="button">Guardar contraseña nueva</button></div><p><button id="hss-rec-close" class="btn secondary" type="button">Cerrar</button></p>`;
+ document.body.append(rec);
+ const recGet=id=>rec.querySelector('#'+id);
+ recoveryUI={panel:rec,area:recGet('hss-rec-fields'),status:recGet('hss-rec-message')};
+ recGet('hss-rec-close').onclick=()=>{rec.hidden=true};
+ recGet('hss-rec-submit').onclick=async()=>{
+  const b=recGet('hss-rec-submit');b.disabled=true;
+  try{
+   await finishRecovery(recGet('hss-rec-new').value,recGet('hss-rec-confirm').value);
+   recGet('hss-rec-new').value='';recGet('hss-rec-confirm').value='';
+   recGet('hss-rec-fields').hidden=true;
+  }catch(e){recGet('hss-rec-message').textContent='No se ha podido cambiar: '+e.message}
+  finally{b.disabled=false;}
+ };
+ const hash=new URLSearchParams(location.hash.slice(1));
+ if(hash.has('error')||hash.has('error_code')){
+  recoveryNotice='El enlace de recuperación no es válido o ha caducado. Abre el panel Supabase · pruebas y solicita un enlace nuevo desde «Recuperar contraseña». No uses el correo antiguo.';
+  displayRecovery();
+  // El fragmento no debe quedar en el historial después de mostrar el mensaje.
+  history.replaceState(null,'',location.pathname+location.search);
+ }
+ // Inicializar SDK para procesar #access_token / #type=recovery al volver del correo.
+ try{sdk()}catch(e){recoveryNotice='No se pudo cargar Supabase. Comprueba la conexión y recarga.';displayRecovery();}
+ if(recoveryGranted)displayRecovery();
  const $=id=>panel.querySelector('#'+id),note=m=>{$('hss-status').textContent=String(m)};
  b.onclick=()=>{panel.hidden=!panel.hidden};$('hss-close').onclick=()=>panel.hidden=true;
  $('hss-login').onclick=async()=>{try{await login($('hss-email').value.trim(),$('hss-password').value);$('hss-password').value='';note('Sesión iniciada. Pulsa Comprobar nube.')}catch(e){note('ERROR: '+e.message)}};
+ $('hss-forgot').onclick=async()=>{
+  const email=$('hss-email').value.trim();
+  if(!email){note('Introduce primero tu correo electrónico en el campo superior.');return;}
+  if(!confirm('Se enviará un enlace para cambiar la contraseña de Supabase. No modifica tus datos. ¿Continuar?'))return;
+  const button=$('hss-forgot');button.disabled=true;
+  try{note(await sendRecovery(email))}catch(e){note('No se pudo solicitar el enlace: '+e.message)}
+  finally{button.disabled=false}
+ };
  $('hss-logout').onclick=async()=>{try{await logout();note('Sesión cerrada.')}catch(e){note(e.message)}};
  $('hss-inspect').onclick=async()=>{try{const r=await inspect();note(r.status+'\nVersiones de pruebas: '+r.count+' · Pendientes locales: '+(r.draft?'sí':'no'))}catch(e){note('ERROR: '+e.message)}};
  $('hss-publish').onclick=async()=>{try{const r=await inspect();note(r.status);if(!confirm('ATENCIÓN: subirás una copia de PRUEBA a Supabase. ¿Has comprobado que no contiene datos reales y conservas JSON?'))return;const out=await publish();note(out.message)}catch(e){note('BLOQUEADO: '+e.message)}};
@@ -174,6 +251,6 @@ function initUI(){
  window.addEventListener('hms-sync-status',e=>{if(['error','conflicto','descarga-pendiente'].includes(e.detail.name)){note(e.detail.message||e.detail.status||e.detail.name);if(e.detail.name==='conflicto')$('hss-auto').checked=false;}});
 }
 window.addEventListener('online',()=>autoTick());timer=setInterval(autoTick,30000);
-window.HMSSupabasePilot={onLocalSave,login,logout,inspect,publish,adopt,enableAuto,who};
+window.HMSSupabasePilot={onLocalSave,login,logout,inspect,publish,adopt,enableAuto,who,sendRecovery};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initUI);else initUI();
 })();
