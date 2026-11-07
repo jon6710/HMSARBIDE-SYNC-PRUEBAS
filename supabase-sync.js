@@ -14,6 +14,16 @@ let client=null,sessionUser=null,working=false,suppressed=false,auto=false,timer
 let recoveryGranted=false;
 let recoveryNotice='';
 let recoveryUI=null;
+// Capturamos el enlace de recuperación ANTES de que Supabase o la interfaz lo procesen.
+// Los tokens se usan una sola vez en memoria; se retiran inmediatamente de la URL.
+const returnParams=new URLSearchParams(location.hash.replace(/^#/,''));
+const recoveryReturn=(returnParams.get('type')==='recovery' && !!returnParams.get('access_token') && !!returnParams.get('refresh_token'))
+  ? {access_token:returnParams.get('access_token'),refresh_token:returnParams.get('refresh_token')}:null;
+const recoveryReturnError=returnParams.get('error_code')||returnParams.get('error')||'';
+if(recoveryReturn || recoveryReturnError){
+ history.replaceState(null,'',location.pathname+location.search);
+}
+
 function displayRecovery(){
  if(!recoveryUI)return;
  recoveryUI.panel.hidden=false;
@@ -65,6 +75,25 @@ function onLocalSave(s){
   await set('draft',{id:uid(),base,state:copy,updatedAt:new Date().toISOString()});
   event('pendiente');
  }).catch(e=>event('error',{message:'No se pudo conservar la cola local: '+e.message}));
+}
+async function handleRecoveryReturn(){
+ if(!recoveryReturn)return;
+ recoveryNotice='Validando el enlace de recuperación con Supabase…';
+ displayRecovery();
+ try{
+  const {data,error}=await sdk().auth.setSession(recoveryReturn);
+  if(error)throw error;
+  if(!data?.session?.user)throw Error('Supabase no confirmó la sesión de recuperación.');
+  recoveryGranted=true;
+  auto=false;
+  recoveryNotice='Enlace validado. Introduce y confirma una contraseña nueva (mínimo 12 caracteres).';
+ }catch(e){
+  recoveryGranted=false;
+  recoveryNotice='No se pudo validar el enlace: '+e.message+'. Solicita otro enlace desde Recuperar contraseña.';
+ }finally{
+  recoveryReturn.access_token='';recoveryReturn.refresh_token='';
+  displayRecovery();
+ }
 }
 function sdk(){
  if(!window.supabase?.createClient)throw Error('Supabase no está disponible. La aplicación local sigue funcionando.');
@@ -222,16 +251,15 @@ function initUI(){
   }catch(e){recGet('hss-rec-message').textContent='No se ha podido cambiar: '+e.message}
   finally{b.disabled=false;}
  };
- const hash=new URLSearchParams(location.hash.slice(1));
- if(hash.has('error')||hash.has('error_code')){
+ if(recoveryReturnError){
   recoveryNotice='El enlace de recuperación no es válido o ha caducado. Abre el panel Supabase · pruebas y solicita un enlace nuevo desde «Recuperar contraseña». No uses el correo antiguo.';
   displayRecovery();
-  // El fragmento no debe quedar en el historial después de mostrar el mensaje.
-  history.replaceState(null,'',location.pathname+location.search);
+  // El fragmento ya se ha retirado antes de inicializar el SDK.
  }
  // Inicializar SDK para procesar #access_token / #type=recovery al volver del correo.
  try{sdk()}catch(e){recoveryNotice='No se pudo cargar Supabase. Comprueba la conexión y recarga.';displayRecovery();}
- if(recoveryGranted)displayRecovery();
+ if(recoveryReturn)handleRecoveryReturn();
+ else if(recoveryGranted)displayRecovery();
  const $=id=>panel.querySelector('#'+id),note=m=>{$('hss-status').textContent=String(m)};
  b.onclick=()=>{panel.hidden=!panel.hidden};$('hss-close').onclick=()=>panel.hidden=true;
  $('hss-login').onclick=async()=>{try{await login($('hss-email').value.trim(),$('hss-password').value);$('hss-password').value='';note('Sesión iniciada. Pulsa Comprobar nube.')}catch(e){note('ERROR: '+e.message)}};

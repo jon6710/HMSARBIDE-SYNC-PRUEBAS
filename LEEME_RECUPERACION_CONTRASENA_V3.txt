@@ -1,0 +1,15 @@
+HMSARBIDE-SYNC-PRUEBAS V3 — Corrección de recuperación Supabase
+
+Este paquete se sube exclusivamente al repositorio HMSARBIDE-SYNC-PRUEBAS.
+NO subir al repositorio HMSARBIDE ni a Mis Hojas de Servicio estable.
+
+Corrige la captura del token de recuperación: el enlace se valida con setSession y
+la pantalla permite cambiar contraseña cuando Supabase valida la sesión.
+El fragmento sensible se retira de la dirección al abrir la aplicación.
+
+No usa ni modifica los datos de los 11 clientes ni los PDF aprobados.
+No activar la sincronización, publicar copia ni importar JSON antes de probar.
+Un enlace enviado con V2 y mostrado en fotografías debe considerarse comprometido: 
+solicitar un enlace nuevo tras publicar V3.
+
+Pruebas pendientes: Supabase real, navegador ordenador, tablet y móvil, y offline.

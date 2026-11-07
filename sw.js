@@ -1,4 +1,4 @@
-const CACHE='hmsarbide-supabase-piloto-v2';
+const CACHE='hmsarbide-supabase-piloto-v3';
 const ASSETS=[
   './','./index.html','./styles.css','./app.js','./offline-sync.js','./manifest.json',
   './supabase-sync.js','./piloto-documentos.js', './approved-backgrounds/AUTOCLAVE_HOJA_SERVICIO_APROBADA.png', './approved-backgrounds/AUTOCLAVE_ALBARAN_APROBADO.png', './approved-backgrounds/AUTOCLAVE_FACTURA_APROBADA.png', './approved-backgrounds/MOBILIARIO_HOJA_SERVICIO_REFERENCIA.png', './approved-backgrounds/MOBILIARIO_ALBARAN_REFERENCIA.png', './approved-backgrounds/MOBILIARIO_FACTURA_REFERENCIA.png', './icons/icon-180.png','./icons/icon-192.png','./icons/icon-512.png'
