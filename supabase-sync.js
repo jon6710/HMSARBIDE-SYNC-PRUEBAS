@@ -145,11 +145,13 @@ async function versions(){
  const list=[];let page=0;
  while(true){
   const {data,error}=await sdk().from('app_data')
-   .select('record_id,data,created_at')
-   .eq('user_id',sessionUser.id).eq('data_type',NS)
+   .select('record_id,data,created_at,data_type,user_id')
+   .eq('user_id',sessionUser.id)
    .order('created_at',{ascending:true}).range(page*500,(page+1)*500-1);
   if(error)throw Error('No se pudo consultar la nube: '+error.message);
-  list.push(...(data||[]));if(!data||data.length<500)break;
+  // Evitamos depender de un filtro data_type que puede ocultar una fila ya publicada.
+  // Solo se admiten filas del namespace exacto; los datos antiguos no se modifican.
+  list.push(...(data||[]).filter(row=>row.data_type===NS));if(!data||data.length<500)break;
   if(++page>=10)throw Error('Demasiadas versiones; revisa el historial antes de continuar.');
  }
  const parsed=[],rejected=[];
@@ -167,8 +169,8 @@ async function versions(){
   if(byIdError)throw Error('Copia previamente confirmada, pero falla su búsqueda: '+byIdError.message);
   if(byId?.length){
    const row=byId[0],found=decodeVersion(row);
-   throw Error('La copia publicada existe, pero no aparece en la consulta de versiones. '+
-    (row.data_type!==NS?'Tipo de registro distinto al esperado. ':row.user_id!==sessionUser.id?'Usuario diferente al de la sesión. ':'Revisar filtros/permisos de lectura. ')+
+   throw Error('La copia publicada existe pero el listado completo del usuario no la devuelve como versión válida. '+
+    (row.data_type!==NS?'Tipo de registro distinto al esperado. ':row.user_id!==sessionUser.id?'Usuario diferente al de la sesión. ':'Revisar consulta o formato: el registro puntual es legible. ')+
     (found.error?'Formato: '+found.error+'. ':'')+'No se realizará ninguna escritura.');
   }
   throw Error('Este dispositivo conserva un identificador de publicación confirmada, pero no puede recuperar la fila en Supabase. Posible problema de permisos, sesión o conexión. No publiques otra copia.');
