@@ -125,17 +125,57 @@ async function checkAccount(){
  if(!existing)await set('owner',sessionUser.id);
 }
 async function logout(){if(client)await client.auth.signOut();sessionUser=null;auto=false;event('sin-sesion');}
+// Lectura verificable: nunca ocultar filas por un filtro silencioso.
+// Incluye una consulta puntual por record_id cuando el dispositivo ya reconoció un envío.
+function decodeVersion(row){
+ let raw=row.data;
+ if(typeof raw==='string'){
+  try{raw=JSON.parse(raw)}catch{return {error:'JSON no válido en data'}}
+ }
+ if(!raw||typeof raw!=='object')return {error:'data no es un objeto'};
+ const version=raw.version;
+ const state=raw.state;
+ if(typeof version!=='string'||!version.trim())return {error:'falta version en data'};
+ if(!state||!Array.isArray(state.services))return {error:'state.services no es una lista'};
+ if(String(row.record_id)!==version)return {error:'record_id no coincide con version'};
+ return {item:{...row,version,parent:raw.parent??null,state}};
+}
 async function versions(){
  if(!await who())throw Error('Inicia sesión primero.');
  const list=[];let page=0;
  while(true){
-  const {data,error}=await sdk().from('app_data').select('record_id,data,created_at').eq('user_id',sessionUser.id).eq('data_type',NS).order('created_at',{ascending:true}).range(page*500,(page+1)*500-1);
-  if(error)throw error;
-  list.push(...data);if(data.length<500)break;
+  const {data,error}=await sdk().from('app_data')
+   .select('record_id,data,created_at')
+   .eq('user_id',sessionUser.id).eq('data_type',NS)
+   .order('created_at',{ascending:true}).range(page*500,(page+1)*500-1);
+  if(error)throw Error('No se pudo consultar la nube: '+error.message);
+  list.push(...(data||[]));if(!data||data.length<500)break;
   if(++page>=10)throw Error('Demasiadas versiones; revisa el historial antes de continuar.');
  }
- return list.map(x=>({...x,version:x.data?.version,parent:x.data?.parent??null,state:x.data?.state})).filter(x=>x.version&&x.state&&Array.isArray(x.state.services));
+ const parsed=[],rejected=[];
+ for(const row of list){const result=decodeVersion(row);
+  if(result.error)rejected.push(`${String(row.record_id).slice(0,12)}: ${result.error}`);
+  else parsed.push(result.item);
+ }
+ // Si se han guardado filas pero no tienen la estructura correcta, jamás mostrar «nube vacía».
+ if(rejected.length)throw Error(`Hay ${list.length} registro(s) de prueba, pero ${rejected.length} no se pueden leer: ${rejected.slice(0,3).join('; ')}. No publiques ni descargues hasta revisar.`);
+ // Protección específica ante el problema observado: publicación confirmada pero listado vacío.
+ const localHead=await get('head');
+ if(parsed.length===0&&localHead){
+  const {data:byId,error:byIdError}=await sdk().from('app_data')
+   .select('record_id,user_id,data_type,data').eq('record_id',localHead).limit(3);
+  if(byIdError)throw Error('Copia previamente confirmada, pero falla su búsqueda: '+byIdError.message);
+  if(byId?.length){
+   const row=byId[0],found=decodeVersion(row);
+   throw Error('La copia publicada existe, pero no aparece en la consulta de versiones. '+
+    (row.data_type!==NS?'Tipo de registro distinto al esperado. ':row.user_id!==sessionUser.id?'Usuario diferente al de la sesión. ':'Revisar filtros/permisos de lectura. ')+
+    (found.error?'Formato: '+found.error+'. ':'')+'No se realizará ninguna escritura.');
+  }
+  throw Error('Este dispositivo conserva un identificador de publicación confirmada, pero no puede recuperar la fila en Supabase. Posible problema de permisos, sesión o conexión. No publiques otra copia.');
+ }
+ return parsed;
 }
+
 function heads(list){
  const parents=new Set(list.map(x=>x.parent).filter(Boolean));
  return list.filter(x=>!parents.has(x.version));
@@ -147,10 +187,10 @@ async function inspect(){
  const head=await get('head');
  let status='';
  if(h.length>1)status='CONFLICTO: existen varias versiones de nube. No se sobrescribirá ninguna.';
- else if(!h.length)status='Nube de pruebas vacía. No se han tocado los datos antiguos de Supabase.';
+ else if(!h.length)status='Nube de pruebas vacía (0 registros válidos y sin publicación reconocida en este dispositivo). No se han tocado los datos antiguos de Supabase.';
  else if(draft&&draft.base!==h[0].version)status='CONFLICTO: hay cambios locales y una versión de nube diferente. No se sobrescribirá nada.';
  else if(draft)status='Hay cambios locales pendientes; nube compatible.';
- else if(head===h[0].version)status='Ordenador y nube están en la misma versión.';
+ else if(head===h[0].version)status='Copia publicada encontrada y verificada. Ordenador y nube están en la misma versión.';
  else if(head===null&& !isEmpty(local))status='Datos locales sin vincular. Se requiere revisión manual antes de adoptar la nube.';
  else status='Hay una versión de nube disponible para descargar de forma segura.';
  const result={status,count:list.length,heads:h.length,remote:h.length===1?h[0]:null,draft:!!draft,localEmpty:isEmpty(local),localHead:head};
@@ -179,13 +219,15 @@ async function publish(){
   if(JSON.stringify(payload).length>3500000)throw Error('La copia supera el tamaño de prueba (3,5 MB); exporta JSON y revisa fotografías antes de sincronizar.');
   const {error}=await sdk().from('app_data').insert({user_id:sessionUser.id,data_type:NS,record_id:toSend.id,data:payload});
   if(error)throw error;
-  // Solo reconocer el envío si otro dispositivo puede leer su fila.
-  const {data:verify,error:verifyError}=await sdk().from('app_data').select('record_id').eq('user_id',sessionUser.id).eq('data_type',NS).eq('record_id',toSend.id).maybeSingle();
+  // Solo reconocer el envío tras comprobar contenido y estructura de la fila recuperada.
+  const {data:verify,error:verifyError}=await sdk().from('app_data').select('record_id,data').eq('user_id',sessionUser.id).eq('data_type',NS).eq('record_id',toSend.id).maybeSingle();
   if(verifyError||!verify)throw Error('No se ha podido confirmar la escritura. Conservar copia local; no repetir a ciegas.');
+  const checked=decodeVersion(verify);
+  if(checked.error||checked.item.version!==toSend.id)throw Error('La copia se recibió, pero su lectura no coincide: '+(checked.error||'ID diferente')+'. No repetir el envío.');
   await set('head',toSend.id);
   const latest=await get('draft');if(latest?.id===toSend.id)await set('draft',null);
   const check=await inspect();
-  if(check.heads>1)throw Error('Se detectó una edición simultánea. Versiones conservadas; sincronización detenida.');
+  if(check.heads!==1||check.remote?.version!==toSend.id)throw Error('Publicación guardada, pero la lectura de versiones no coincide. Se conserva el registro sin reintentar.');
   event('publicado');return {message:'Copia de pruebas publicada y verificada. No se han modificado registros de la aplicación antigua.'};
  }finally{working=false;}
 }
@@ -272,7 +314,7 @@ function initUI(){
   finally{button.disabled=false}
  };
  $('hss-logout').onclick=async()=>{try{await logout();note('Sesión cerrada.')}catch(e){note(e.message)}};
- $('hss-inspect').onclick=async()=>{try{const r=await inspect();note(r.status+'\nVersiones de pruebas: '+r.count+' · Pendientes locales: '+(r.draft?'sí':'no'))}catch(e){note('ERROR: '+e.message)}};
+ $('hss-inspect').onclick=async()=>{try{const r=await inspect();note(r.status+'\nVersiones de pruebas válidas: '+r.count+' · Pendientes locales: '+(r.draft?'sí':'no')+' · ID local reconocido: '+(r.localHead?String(r.localHead).slice(0,8)+'…':'ninguno'))}catch(e){note('ERROR: '+e.message)}};
  $('hss-publish').onclick=async()=>{try{const r=await inspect();note(r.status);if(!confirm('ATENCIÓN: subirás una copia de PRUEBA a Supabase. ¿Has comprobado que no contiene datos reales y conservas JSON?'))return;const out=await publish();note(out.message)}catch(e){note('BLOQUEADO: '+e.message)}};
  $('hss-adopt').onclick=async()=>{try{const r=await inspect();note(r.status);if(!confirm('¿Descargar la copia de PRUEBA desde Supabase? Solo está permitido si no hay cambios locales en conflicto.'))return;const out=await adopt();note(out.message)}catch(e){note('BLOQUEADO: '+e.message)}};
  $('hss-auto').onchange=()=>{if($('hss-auto').checked&&!confirm('Activar envíos automáticos SOLO EN LA VERSIÓN DE PRUEBAS. ¿Confirmas?')){$('hss-auto').checked=false;return;}enableAuto($('hss-auto').checked)};

@@ -1,0 +1,11 @@
+HMSARBIDE — V4 SOLO PRUEBAS — lectura verificable de Supabase
+
+Cambio exclusivo en supabase-sync.js y en la version de caché de index.html.
+- Si Supabase devuelve registros de prueba no reconocibles, informa del motivo en vez de decir «nube vacía».
+- Si el equipo recuerda una publicación, consulta el ID directamente y bloquea cualquier segundo envío si la copia no aparece en el listado.
+- Comprueba la estructura completa tras insertar una copia, no solo su ID.
+- No incorpora clientes reales ni activa envíos automáticos.
+
+PASOS: actualizar ÚNICAMENTE el repositorio HMSARBIDE-SYNC-PRUEBAS con el contenido del ZIP; abrir la aplicación, iniciar sesión si hace falta, pulsar SOLO «Comprobar nube (sin cambios)», y enviar el mensaje. NO pulsar Publicar ni activar el envío automático.
+
+La aplicación estable, HMSARBIDE principal y Supabase no han sido modificados desde este entorno. Pruebas del servidor pendientes.
