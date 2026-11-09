@@ -140,41 +140,67 @@ function decodeVersion(row){
  if(String(row.record_id)!==version)return {error:'record_id no coincide con version'};
  return {item:{...row,version,parent:raw.parent??null,state}};
 }
+// V6: contrastar dos lecturas independientes. Si una omite una fila, se bloquea
+// la publicación y se informa del ID exacto; nunca se considera nube compatible.
+async function fetchPaged(makeQuery,label){
+ const rows=[];let page=0;
+ while(true){
+  const {data,error}=await makeQuery().order('created_at',{ascending:true}).range(page*500,(page+1)*500-1);
+  if(error)throw Error('Fallo al leer '+label+': '+error.message);
+  rows.push(...(data||[]));
+  if(!data||data.length<500)break;
+  if(++page>=10)throw Error('Demasiados registros en '+label+'. No continuar.');
+ }
+ return rows;
+}
 async function versions(){
  if(!await who())throw Error('Inicia sesión primero.');
- const list=[];let page=0;
- while(true){
-  const {data,error}=await sdk().from('app_data')
-   .select('record_id,data,created_at,data_type,user_id')
-   .eq('user_id',sessionUser.id)
-   .order('created_at',{ascending:true}).range(page*500,(page+1)*500-1);
-  if(error)throw Error('No se pudo consultar la nube: '+error.message);
-  // Evitamos depender de un filtro data_type que puede ocultar una fila ya publicada.
-  // Solo se admiten filas del namespace exacto; los datos antiguos no se modifican.
-  list.push(...(data||[]).filter(row=>row.data_type===NS));if(!data||data.length<500)break;
-  if(++page>=10)throw Error('Demasiadas versiones; revisa el historial antes de continuar.');
+ const table=()=>sdk().from('app_data').select('record_id,data,created_at,data_type,user_id');
+ // La primera lectura filtra por usuario y tipo en el servidor.
+ const a=await fetchPaged(()=>table().eq('user_id',sessionUser.id).eq('data_type',NS),'versiones del piloto');
+ // La segunda lectura usa únicamente el filtro de usuario, comprobando el tipo localmente.
+ const all=await fetchPaged(()=>table().eq('user_id',sessionUser.id),'registros del usuario');
+ const b=all.filter(row=>row.data_type===NS);
+ const ids=rows=>new Set(rows.map(row=>String(row.record_id)));
+ const ai=ids(a),bi=ids(b);
+ const onlyA=[...ai].filter(id=>!bi.has(id));
+ const onlyB=[...bi].filter(id=>!ai.has(id));
+ if(onlyA.length||onlyB.length){
+  throw Error('LECTURA INCONSISTENTE: la consulta filtrada devuelve '+a.length+
+   ' versiones y la consulta general devuelve '+b.length+
+   '. IDs discrepantes: '+[...onlyA,...onlyB].slice(0,5).join(', ')+
+   '. No publiques ni descargues; revisa Supabase y conserva JSON.');
  }
  const parsed=[],rejected=[];
- for(const row of list){const result=decodeVersion(row);
-  if(result.error)rejected.push(`${String(row.record_id).slice(0,12)}: ${result.error}`);
+ for(const row of a){
+  if(row.user_id!==sessionUser.id||row.data_type!==NS){
+   rejected.push(String(row.record_id)+': propietario/tipo inesperado');continue;
+  }
+  const result=decodeVersion(row);
+  if(result.error)rejected.push(String(row.record_id)+': '+result.error);
   else parsed.push(result.item);
  }
- // Si se han guardado filas pero no tienen la estructura correcta, jamás mostrar «nube vacía».
- if(rejected.length)throw Error(`Hay ${list.length} registro(s) de prueba, pero ${rejected.length} no se pueden leer: ${rejected.slice(0,3).join('; ')}. No publiques ni descargues hasta revisar.`);
- // Protección específica ante el problema observado: publicación confirmada pero listado vacío.
+ if(rejected.length)throw Error('Versiones de prueba ilegibles: '+rejected.slice(0,5).join('; ')+'. No publiques ni descargues.');
  const localHead=await get('head');
- if(parsed.length===0&&localHead){
-  const {data:byId,error:byIdError}=await sdk().from('app_data')
-   .select('record_id,user_id,data_type,data').eq('record_id',localHead).limit(3);
-  if(byIdError)throw Error('Copia previamente confirmada, pero falla su búsqueda: '+byIdError.message);
-  if(byId?.length){
-   const row=byId[0],found=decodeVersion(row);
-   throw Error('La copia publicada existe pero el listado completo del usuario no la devuelve como versión válida. '+
-    (row.data_type!==NS?'Tipo de registro distinto al esperado. ':row.user_id!==sessionUser.id?'Usuario diferente al de la sesión. ':'Revisar consulta o formato: el registro puntual es legible. ')+
-    (found.error?'Formato: '+found.error+'. ':'')+'No se realizará ninguna escritura.');
+ const draft=await get('draft');
+ const checkIds=[localHead,draft?.base,draft?.id].filter(Boolean);
+ // Incluso si ambos listados coinciden, verificar individualmente las referencias locales.
+ for(const id of new Set(checkIds)){
+  const {data:probe,error}=await sdk().from('app_data')
+   .select('record_id,data,data_type,user_id').eq('record_id',id).limit(2);
+  if(error)throw Error('No se pudo comprobar el ID '+id+': '+error.message);
+  const row=(probe||[]).find(r=>String(r.record_id)===String(id));
+  if(row&&row.user_id===sessionUser.id&&row.data_type===NS){
+   const decoded=decodeVersion(row);
+   if(decoded.error)throw Error('Registro '+id+' ilegible: '+decoded.error);
+   if(!ai.has(String(id)))throw Error('LECTURA INCOMPLETA: Supabase devuelve el registro '+id+
+    ' directamente, pero NO aparece en los listados ('+a.length+' versiones). No publiques ni descargues.');
+  }else if(id===localHead){
+   throw Error('El ID local reconocido '+id+' no se pudo consultar directamente. No publiques ni descargues.');
   }
-  throw Error('Este dispositivo conserva un identificador de publicación confirmada, pero no puede recuperar la fila en Supabase. Posible problema de permisos, sesión o conexión. No publiques otra copia.');
  }
+ const unique=ids(parsed);
+ if(unique.size!==parsed.length)throw Error('IDs de versión duplicados. No publiques ni descargues.');
  return parsed;
 }
 
@@ -195,6 +221,8 @@ async function inspect(){
  else if(head===h[0].version)status='Copia publicada encontrada y verificada. Ordenador y nube están en la misma versión.';
  else if(head===null&& !isEmpty(local))status='Datos locales sin vincular. Se requiere revisión manual antes de adoptar la nube.';
  else status='Hay una versión de nube disponible para descargar de forma segura.';
+ const unresolved=await get('unverifiedPublish');
+ if(unresolved)status='PUBLICACIÓN SIN VERIFICAR ('+unresolved.id+'). No publiques otra vez. '+status;
  const result={status,count:list.length,heads:h.length,remote:h.length===1?h[0]:null,draft:!!draft,localEmpty:isEmpty(local),localHead:head};
  event('inspeccion',{status});return result;
 }
@@ -203,6 +231,8 @@ async function publish(){
  working=true;
  try{
   await captureJob;
+  const unresolved=await get('unverifiedPublish');
+  if(unresolved)throw Error('Hay una publicación ya enviada sin verificar ('+unresolved.id+'). No se permite otra publicación.');
   const inspection=await inspect();
   if(inspection.heads>1)throw Error(inspection.status);
   const head=inspection.remote?.version||null;
@@ -226,10 +256,25 @@ async function publish(){
   if(verifyError||!verify)throw Error('No se ha podido confirmar la escritura. Conservar copia local; no repetir a ciegas.');
   const checked=decodeVersion(verify);
   if(checked.error||checked.item.version!==toSend.id)throw Error('La copia se recibió, pero su lectura no coincide: '+(checked.error||'ID diferente')+'. No repetir el envío.');
-  await set('head',toSend.id);
-  const latest=await get('draft');if(latest?.id===toSend.id)await set('draft',null);
-  const check=await inspect();
-  if(check.heads!==1||check.remote?.version!==toSend.id)throw Error('Publicación guardada, pero la lectura de versiones no coincide. Se conserva el registro sin reintentar.');
+  // Guardar un recibo local permanente antes del listado; ante un error no reinsertar.
+  await set('unverifiedPublish',{id:toSend.id,parent:head,createdAt:new Date().toISOString()});
+  let check;
+  try{
+   // Comprobar la versión publicada sin dar por verificado un listado incompleto.
+   const published=await versions();
+   const h=heads(published);
+   if(h.length!==1||h[0].version!==toSend.id)
+    throw Error('La versión escrita no aparece como cabeza única de la nube.');
+   check={ok:true};
+  }catch(e){
+   throw Error('Publicación guardada con ID '+toSend.id+', pero sin verificar el historial: '+e.message+
+    ' NO REPITAS el envío. Conserva JSON y comprueba la tabla de Supabase.');
+  }
+  if(check.ok){
+   await set('head',toSend.id);
+   const latest=await get('draft');if(latest?.id===toSend.id)await set('draft',null);
+   await set('unverifiedPublish',null);
+  }
   event('publicado');return {message:'Copia de pruebas publicada y verificada. No se han modificado registros de la aplicación antigua.'};
  }finally{working=false;}
 }
@@ -237,6 +282,7 @@ async function adopt(){
  if(working)throw Error('Sincronización ocupada.');
  working=true;
  try{
+  if(await get('unverifiedPublish'))throw Error('Hay una publicación anterior sin verificar. No descargues ni sobrescribas datos.');
   const r=await inspect();
   if(r.heads!==1||!r.remote)throw Error('No hay una única versión segura que adoptar.');
   if(r.draft)throw Error('Hay cambios locales pendientes. Exporta su JSON y resuelve el conflicto antes de continuar.');
