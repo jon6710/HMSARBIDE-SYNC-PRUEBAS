@@ -1,4 +1,4 @@
-const CACHE='hmsarbide-supabase-piloto-v6';
+const CACHE='hmsarbide-supabase-piloto-v7';
 const ASSETS=[
   './','./index.html','./styles.css','./app.js','./offline-sync.js','./manifest.json',
   './supabase-sync.js','./piloto-documentos.js', './approved-backgrounds/AUTOCLAVE_HOJA_SERVICIO_APROBADA.png', './approved-backgrounds/AUTOCLAVE_ALBARAN_APROBADO.png', './approved-backgrounds/AUTOCLAVE_FACTURA_APROBADA.png', './approved-backgrounds/MOBILIARIO_HOJA_SERVICIO_REFERENCIA.png', './approved-backgrounds/MOBILIARIO_ALBARAN_REFERENCIA.png', './approved-backgrounds/MOBILIARIO_FACTURA_REFERENCIA.png', './icons/icon-180.png','./icons/icon-192.png','./icons/icon-512.png'
@@ -9,6 +9,12 @@ self.addEventListener('fetch',e=>{
   if(e.request.method!=='GET') return;
   if(e.request.mode==='navigate'){
     e.respondWith(fetch(e.request).then(r=>{const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy));return r;}).catch(()=>caches.match('./index.html')));
+    return;
+  }
+  // El codigo de sincronizacion debe consultarse a la red primero: versiones obsoletas
+  // impiden reconocer cambios nuevos en otros dispositivos. Sin red, permite trabajo offline.
+  if(new URL(e.request.url).pathname.endsWith('/supabase-sync.js')){
+    e.respondWith(fetch(e.request,{cache:'no-store'}).then(r=>{if(r.ok){const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy));}return r;}).catch(()=>caches.match(e.request).then(r=>r||Response.error())));
     return;
   }
   e.respondWith(caches.match(e.request).then(cached=>cached||fetch(e.request).then(r=>{const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy));return r;})));
